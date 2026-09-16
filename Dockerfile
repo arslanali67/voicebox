@@ -58,6 +58,13 @@ RUN if [ "$PYTORCH_VARIANT" = "rocm" ]; then \
         --index-url "https://download.pytorch.org/whl/rocm${ROCM_VERSION}" \
         torch torchaudio && \
       printf '[global]\nindex-url = https://download.pytorch.org/whl/rocm%s\nextra-index-url = https://pypi.org/simple\n' "$ROCM_VERSION" > /etc/pip.conf; \
+    elif [ "$PYTORCH_VARIANT" = "cpu" ]; then \
+      # Plain PyPI "torch" bundles the full CUDA runtime (~2GB of unused nvidia-*
+      # wheels) even with no GPU present. The CPU-only index avoids that entirely.
+      pip install --no-cache-dir --prefix=/install \
+        --index-url "https://download.pytorch.org/whl/cpu" \
+        torch torchaudio && \
+      printf '[global]\nindex-url = https://download.pytorch.org/whl/cpu\nextra-index-url = https://pypi.org/simple\n' > /etc/pip.conf; \
     fi
 
 RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
