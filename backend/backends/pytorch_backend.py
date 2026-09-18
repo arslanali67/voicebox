@@ -296,7 +296,13 @@ class PyTorchSTTBackend:
             logger.info("Loading Whisper model %s on %s...", model_size, self.device)
 
             self.processor = WhisperProcessor.from_pretrained(model_name)
-            self.model = WhisperForConditionalGeneration.from_pretrained(model_name)
+            # low_cpu_mem_usage=False: with newer transformers the default meta-device
+            # init leaves Whisper's tied proj_out.weight on "meta", so transcribe()
+            # fails with "Tensor on device meta is not on the expected device cpu!".
+            # Same workaround the Qwen loader above already uses for CPU.
+            self.model = WhisperForConditionalGeneration.from_pretrained(
+                model_name, low_cpu_mem_usage=False
+            )
 
         self.model.to(self.device)
         self.model_size = model_size
